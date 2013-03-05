@@ -1380,7 +1380,13 @@ class Model
 	public static function scoped()
 	{
 		require_once(__DIR__.'/Scope.php');
-		return new Scopes(get_called_class());
+		$instance = new static();
+		return $instance->scope();
+	}
+	
+	public function scope()
+	{
+		return new Scopes($this);
 	}
 	
 	/**
@@ -1401,10 +1407,6 @@ class Model
 	*
 	* @return array An array of finder options
 	*/
-	public function default_scope()
-	{
-		return array();
-	}
 	
 	/**
 	* To be overridden by the model. It should return an array of options that are named
@@ -1445,11 +1447,21 @@ class Model
 	 * 
 	 * @return 
 	 */
-	public static function has_default_scope()
+	public function get_default_scope()
 	{
+		$scope = $this->default_scope();
+		if($scope)
+		{
+			return $scope;
+		}
 		if(isset(static::$default_scope))
 			return static::$default_scope;
-		return false;
+		return null;
+	}
+	
+	public function default_scope()
+	{
+		return array();
 	}
 
 	/**
@@ -1833,6 +1845,7 @@ class Model
 		{
 			$scope = static::scoped();
 		}
+		//Default scope is always applied last
 		if($scope->default_scope_is_enabled() && $default = $scope->default_scope())
 		{
 			if($options)
