@@ -77,15 +77,17 @@ class Query
 
     if (is_hash($args[0])) 
     {
-      foreach($args[0] as $key => $value)  
-	  if($value === null)
+      foreach($args[0] as $key => $value)
 	  {
-	  	$this->append_where("$key IS NULL",$value);
-	  }
-	  else
-	  {
-        $this->append_where("$key=?",$value);
-	  }
+		  if($value === null)
+		  {
+		  	$this->append_where("$key IS NULL",$value);
+		  }
+		  else
+		  {
+	        $this->append_where("$key=?",$value);
+		  }
+	  }  
     }
     else 
     {
@@ -105,9 +107,15 @@ class Query
 
     if (is_array($value))
       foreach($value as $v)
-        $this->options['conditions'][] = $v;
+	  {
+	  	if($v !== null)
+         $this->options['conditions'][] = $v;
+	  }
     else
-      $this->options['conditions'][] = $value;
+	{
+	  if($value !== null)
+       $this->options['conditions'][] = $value;
+	}
   }
 
   public function readonly($flag = true) 
