@@ -88,21 +88,6 @@ class Model
 	private $attributes = array();
 	
 	/**
-	* While enabled - The default scope will be used in all find methods for the Model
-	*
-	* @var boolean
-	*/
-	protected $default_scope_enabled = true;
-	
-	/**
-	* Flag that is set if conditions are added after scopes have been applied
-	* It is used to determine whether or not a find_by_pk should be called even
-	* if conditions have been set after a find by the default scope
-	*
-	* @var boolean
-	*/
-	private $added_unscoped_conditions = false;
-	/**
 	 * Flag whether or not this model's attributes have been modified since it will either be null or an array of column_names that have been modified
 	 *
 	 * @var array
@@ -1363,8 +1348,7 @@ class Model
 			$options['conditions'] = SQLBuilder::create_conditions_from_underscored_string(static::connection(),substr($method,9),$args,static::$alias_attribute);
 			return static::count($options);
 		}
-		$instance = new static();
-		if($scope = $instance->check_for_named_scope($method))
+		if($scope = static::check_for_named_scope($method))
 		{
 			return static::scoped()->$method();
 		}
@@ -1397,16 +1381,12 @@ class Model
 	{
 		require_once(__DIR__.'/Scope.php');
 		$instance = new static();
-		return new Scopes($instance);
+		return $instance->scope();
 	}
 	
-	/**
-	*  Called to disable a model from using the default scope on a find.
-	* Usage Model::scoped()->disable_default_scope();
-	*/
-	public function disable_default_scope()
+	public function scope()
 	{
-		$this->default_scope_enabled = false;
+		return new Scopes($this);
 	}
 	
 	/**
@@ -1427,10 +1407,6 @@ class Model
 	*
 	* @return array An array of finder options
 	*/
-	public function default_scope()
-	{
-		return array();
-	}
 	
 	/**
 	* To be overridden by the model. It should return an array of options that are named
@@ -1439,7 +1415,7 @@ class Model
 	*	<code>
 	*	public function named_scopes()
 	*    {
-	*        return array(
+	*    public static $named_scopes = array(
 	*            'is_tito'=>array(
 	*                'conditions'=>'name="tito"',
 	*            ),
@@ -1448,27 +1424,44 @@ class Model
 	*                'limit'=>2,
 	*            ),
 	*        );
-	*    }
 	*  	Model::is_tito()->find('all');
 	*   </code>
 	*
-	* @return array An array containing named arrays of finder options
-	*/
-	public function named_scopes()
-	{
-		return array();
-	}
-	
-	/**
 	*  @return array|null An array of the options within the named scope
 	*/
-	public function check_for_named_scope($scope)
+	public static function check_for_named_scope($scope)
 	{
-		$scopes = $this->named_scopes();
+		if(!isset(static::$named_scopes))
+		{
+			return null;
+		}
+		$scopes = static::$named_scopes;
 		if(array_key_exists($scope,$scopes))
 			return $scopes[$scope];
 		else
 			return null;
+	}
+	
+	/**
+	 * Returns true if the model has a default scope declared
+	 * 
+	 * @return 
+	 */
+	public function get_default_scope()
+	{
+		$scope = $this->default_scope();
+		if($scope)
+		{
+			return $scope;
+		}
+		if(isset(static::$default_scope))
+			return static::$default_scope;
+		return null;
+	}
+	
+	public function default_scope()
+	{
+		return array();
 	}
 
 	/**
@@ -1688,7 +1681,7 @@ class Model
 			$args = $args[0];
 		// anything left in $args is a find by pk
 		if ($num_args > 0 && (!isset($options['conditions']) || 
-			(isset($options['scope']) && !$options['scope']->get_model()->added_unscoped_conditions)))
+			(isset($options['scope']) && !$options['scope']->added_unscoped_conditions)))
 		{
 			return static::find_by_pk($args, $options);
 		}
@@ -1846,16 +1839,18 @@ class Model
 	{
 		if(isset($options['scope']))
 		{
-			$instance = $options['scope']->get_model();
+			$scope = $options['scope'];
 		}
 		else
-			$instance = new static();
-		if($instance->default_scope_enabled && $default = $instance->default_scope())
 		{
-			$scope = $instance::scoped();
+			$scope = static::scoped();
+		}
+		//Default scope is always applied last
+		if($scope->default_scope_is_enabled() && $default = $scope->default_scope())
+		{
 			if($options)
 			{
-				$instance->added_unscoped_conditions = true;
+				$scope->added_unscoped_conditions = true;
 				$scope->add_scope($options);
 			}
 			$options = $scope->add_scope($default)->get_options();

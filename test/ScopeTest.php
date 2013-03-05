@@ -1,12 +1,22 @@
 <?php
 include 'helpers/config.php';
-
+class NullScope extends Author
+{
+	public static $table_name = 'authors';
+  	public static $default_scope = array(
+		'conditions'=>'parent_author_id IS NULL',
+	);
+}
 class IsNotBob extends Author
 {
 	public static $table_name = 'authors';
-	public function named_scopes()
-    {
-        return array(
+	
+	public static $has_many = array(
+		array('parents','foreign_key'=>'parent_author_id','class_name'=>'IsNotBob'),
+	);
+	
+	public static $named_scopes = 
+            array(
             'is_tito'=>array(
                 'conditions'=>'name="tito"',
             ),
@@ -17,26 +27,27 @@ class IsNotBob extends Author
 				'conditions'=>'author_id <= 2'
 			),
         );
-    }
-    
+    public $scoped_name = null;
     /** 
     * Applied to every query unless the default scope is disabled
     */
-    public function default_scope()
-    {
-    	return array(
-			'conditions'=>'name != "Uncle Bob"',
-		);
-    }
+  	public function default_scope()
+	{
+		if($this->scoped_name)
+		{
+			return self::scoped()->where('name = "'.$this->scoped_name.'"');
+		}
+		return self::scoped()->where('name != "Uncle Bob"');
+	} 
     
     /** Parameterized Scope */
-    public function is_tito_call()
+    public static function is_tito_call()
     {
     	return self::scoped()->where('name="tito"');
     }
     
     /** Parameterized Scope */
-    public function last_few($number)
+    public static function last_few($number)
     {
     	return self::scoped()->limit($number);
     }
@@ -52,8 +63,7 @@ class ScopeTest extends DatabaseTest
 	{
 		parent::tear_down();
 	}
-	
-	
+
 	public function test_is_tito_scope()
 	{
 		$tito = IsNotBob::scoped()->is_tito()->all();
@@ -142,6 +152,12 @@ class ScopeTest extends DatabaseTest
 		$this->assertEquals(4,count($everyone));
 	}
 	
+	public function test_disabled_default_scope_with_array_conditions_in_search()
+	{
+		$hasBob = IsNotBob::scoped()->disable_default_scope()->find(array('parent_author_id'=>1));
+		$this->assertEquals(1,count($hasBob));
+	}
+	
 	public function test_find_uses_default_scope()
 	{
 		$notBob = IsNotBob::all();
@@ -168,6 +184,62 @@ class ScopeTest extends DatabaseTest
 	{
 		$bushId = 4;
 		$this->assertEquals('Uncle Bob',IsNotBob::find($bushId)->name);
+	}
+	
+	public function test_null_scope_gets_removed_correctly()
+	{
+		$author1 = NullScope::find(1);
+		$author1->parent_author_id = null;
+		$author1->save();
+		
+		$author = NullScope::scoped()->all(array('conditions'=>
+				array('parent_author_id'=>1))
+			);
+		$this->assertEquals(0,count($author));
+			
+		$author = NullScope::scoped()->disable_default_scope()->all(array('conditions'=>
+				array('parent_author_id'=>1))
+			);
+		$this->assertEquals('Bill Clinton',$author[0]->name);
+	}
+	
+	public function test_using_null_in_a_comparison()
+	{
+		$author1 = NullScope::find(1);
+		$author1->parent_author_id = null;
+		$author1->save();
+		
+		$author = NullScope::scoped()->disable_default_scope()->all(
+			array('conditions'=>
+				array('parent_author_id'=>null))
+			);
+		$this->assertEquals('Tito',$author[0]->name);
+	}
+	public function test_relation_with_scope()
+	{
+		$tito = IsNotBob::find(1);
+		$bush = IsNotBob::find(2);
+		$bush->parent_author_id = 4;
+		$bush->save();
+		
+		$this->assertEquals(1,count($tito->parents));
+		$this->assertEquals(0,count($bush->parents));
+	}
+
+	public function test_query_with_null_condition_is_generated_correctly_through_scope()
+	{
+		$result = IsNotBob::all(array('conditions'=>array('updated_at'=>null)));
+		$this->assertEquals(3,count($result));
+	}
+	
+	public function test_scope_on_a_model_instance()
+	{
+		$first = IsNotBob::find(1);
+		$this->assertEquals('Tito',$first->name);
+		
+		$first->scoped_name = 'George W. Bush';
+		$result = $first->scope()->first();
+		$this->assertEquals('George W. Bush',$result->name);
 	}
 }
 ?>
