@@ -85,6 +85,12 @@ CREATE TABLE property_amenities(
 	property_id int not null
 );
 
+CREATE TABLE property_amenities_camel_key(
+	id serial primary key,
+	AmenityId int not null,
+	PropertyId int not null
+);
+
 CREATE TABLE users(
 	id serial primary key
 );

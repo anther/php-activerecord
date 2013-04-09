@@ -28,6 +28,9 @@ CREATE SEQUENCE amenities_seq START WITH 100;
 DROP SEQUENCE property_seq;
 CREATE SEQUENCE property_seq START WITH 100;
 
+DROP SEQUENCE property_amenities_camel_key_seq;
+CREATE SEQUENCE property_amenities_camel_key_seq START WITH 100;
+
 DROP SEQUENCE property_amenities_seq;
 CREATE SEQUENCE property_amenities_seq START WITH 100;
 

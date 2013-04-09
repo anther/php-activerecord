@@ -89,6 +89,13 @@ CREATE TABLE property_amenities(
   property_id int not null
 );
 
+CREATE SEQUENCE property_amenities_camel_key_seq;
+CREATE TABLE property_amenities_camel_key(
+  id int primary key,
+  AmenityId int not null,
+  PropertyId int not null
+);
+
 CREATE SEQUENCE valuestore_seq;
 CREATE TABLE valuestore(
   id int primary key,

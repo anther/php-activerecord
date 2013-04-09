@@ -10,6 +10,7 @@ SELECT setval('awesome_people_id_seq', max(id)) FROM awesome_people;
 SELECT setval('amenities_amenity_id_seq', max(amenity_id)) FROM amenities;
 SELECT setval('property_property_id_seq', max(property_id)) FROM property;
 SELECT setval('property_amenities_id_seq', max(id)) FROM property_amenities;
+SELECT setval('property_amenities_camel_key_id_seq', max(id)) FROM property_amenities_camel_key;
 SELECT setval('users_id_seq', max(id)) FROM users;
 SELECT setval('newsletters_id_seq', max(id)) FROM newsletters;
 SELECT setval('user_newsletters_id_seq', max(id)) FROM user_newsletters;

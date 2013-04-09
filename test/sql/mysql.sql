@@ -86,6 +86,12 @@ CREATE TABLE property_amenities(
   `property_id` int(11) NOT NULL DEFAULT '0'
 );
 
+CREATE TABLE property_amenities_camel_key(
+  `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `AmenityId` int(11) NOT NULL DEFAULT '0',
+  `PropertyId` int(11) NOT NULL DEFAULT '0'
+);
+
 CREATE TABLE users (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY
 ) ENGINE=InnoDB;

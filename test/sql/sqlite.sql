@@ -85,6 +85,12 @@ CREATE TABLE property_amenities(
   `property_id` INT NOT NULL
 );
 
+CREATE TABLE property_amenities_camel_key(
+  `id` INTEGER NOT NULL PRIMARY KEY,
+  `AmenityId` INT NOT NULL,
+  `PropertyId` INT NOT NULL
+);
+
 CREATE TABLE users (
     id INTEGER NOT NULL PRIMARY KEY
 );
