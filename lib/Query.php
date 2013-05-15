@@ -56,8 +56,12 @@ class Query
       return $this->merge($query->get_options());
     }
     else
+<<<<<<< HEAD
       return $this->model_name->$method($args);
       //throw new ActiveRecordException("The scope \"$method\" does not exists");
+=======
+      throw new ActiveRecordException("The scope \"$method\" does not exists");
+>>>>>>> scopes
   }
 
   public function set_option($option, $value) 
@@ -129,16 +133,22 @@ class Query
    */
   public function merge($options) 
   {
+<<<<<<< HEAD
   	if($options instanceof Query)
   	{
   		$options = $options->get_options();
   	}
+=======
+>>>>>>> scopes
     foreach($options as $option => $value)
     {
       if ($option == 'conditions' && !empty($value[0])) 
       {
+<<<<<<< HEAD
       	if(is_string($value))
       		$value = array($value);
+=======
+>>>>>>> scopes
         $values = isset($value[1]) ? array_splice($value, 1) : array();
         $this->append_where($value[0], $values);
         continue;
@@ -147,6 +157,10 @@ class Query
       	$this->where($value);
       	continue;
       }
+<<<<<<< HEAD
+=======
+
+>>>>>>> scopes
       $this->options[$option] = $value;
     }
     return $this;

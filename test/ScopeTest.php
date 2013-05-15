@@ -7,6 +7,10 @@ class NullScope extends Author
 		'conditions'=>'parent_author_id IS NULL',
 	);
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> scopes
 class IsNotBob extends Author
 {
 	public static $table_name = 'authors';
@@ -40,11 +44,22 @@ class IsNotBob extends Author
 		return self::scoped()->where('name != "Uncle Bob"');
 	} 
     
+<<<<<<< HEAD
     /** Parameterized Scope */
+=======
+>>>>>>> scopes
     public static function is_tito_call()
     {
     	return self::scoped()->where('name="tito"');
     }
+<<<<<<< HEAD
+=======
+
+	public static function is_bob_call()
+	{
+		return self::scoped()->where('name=? AND name = ?','bob','bob');
+	}
+>>>>>>> scopes
     
     /** Parameterized Scope */
     public static function last_few($number)
@@ -52,6 +67,16 @@ class IsNotBob extends Author
     	return self::scoped()->limit($number);
     }
 }
+<<<<<<< HEAD
+=======
+class IsNotBobNoDefault extends IsNotBob
+{
+	public function default_scope()
+	{
+		return null;
+	}
+}
+>>>>>>> scopes
 
 class ScopeTest extends DatabaseTest
 {
@@ -63,6 +88,22 @@ class ScopeTest extends DatabaseTest
 	{
 		parent::tear_down();
 	}
+<<<<<<< HEAD
+=======
+	
+	public function test_class_with_no_default_scope_also_behaves_correctly()
+	{
+		$tito = IsNotBobNoDefault::is_tito()->all();
+		$this->assertEquals(1,count($tito));
+		$this->assertEquals('Tito', $tito[0]->name);
+	}
+	
+	public function test_combining_scopes_creates_a_valid_query()
+	{
+		$scope = IsNotBob::is_bob_call()->is_tito_call();
+		$scope->all();
+	}
+>>>>>>> scopes
 
 	public function test_calling_count_on_a_scope_instance()
 	{
@@ -237,7 +278,11 @@ class ScopeTest extends DatabaseTest
 		$this->assertEquals(1,count($tito->parents));
 		$this->assertEquals(0,count($bush->parents));
 	}
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> scopes
 	public function test_query_with_null_condition_is_generated_correctly_through_scope()
 	{
 		$result = IsNotBob::all(array('conditions'=>array('updated_at'=>null,'author_id'=>3)));
@@ -274,5 +319,22 @@ class ScopeTest extends DatabaseTest
 			array('conditions'=>array('name'=>'Tito')));
 		$this->assertTrue($exists);
 	}
+<<<<<<< HEAD
+=======
+	
+	public function test_calling_undefined_method_on_a_scope()
+	{
+		try
+		{
+			IsNotBob::is_tito_call()->boogalooga();
+		}
+		catch(ActiveRecord\ActiveRecordException $e)
+		{
+			return true;
+		}
+		$this->fail('No exception was thrown');
+	}
+	
+>>>>>>> scopes
 }
 ?>

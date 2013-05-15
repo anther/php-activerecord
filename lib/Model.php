@@ -1285,7 +1285,11 @@ class Model
 	 *
 	 * @var array
 	 */
+<<<<<<< HEAD
 	static $VALID_OPTIONS = array('conditions', 'limit', 'offset', 'order', 'select', 'joins', 'include', 'readonly', 'group', 'from', 'having', 'scope');
+=======
+	static $VALID_OPTIONS = array('conditions', 'limit', 'offset', 'order', 'select', 'joins', 'include', 'readonly', 'group', 'from', 'having', 'scope_options');
+>>>>>>> scopes
 
 	/**
 	 * Enables the use of dynamic finders and scopes.
@@ -1405,6 +1409,7 @@ class Model
 	}
 	
 	/**
+<<<<<<< HEAD
 	*  To be overridden by the model.  It should return an options array that is 
 	*  to be applied every time the model is called
 	*
@@ -1424,6 +1429,8 @@ class Model
 	*/
 	
 	/**
+=======
+>>>>>>> scopes
 	* To be overridden by the model. It should return an array of options that are named
 	* by their key.
 	*
@@ -1474,6 +1481,27 @@ class Model
 		return null;
 	}
 	
+<<<<<<< HEAD
+=======
+	/**
+	*  To be overridden by the model.  It should return an options array that is 
+	*  to be applied every time the model is called
+	*
+	*	<code>
+	*	public function default_scope()
+	*    {
+	*        return array(
+	*       			'conditions'=>'deleted == 0',
+	*       			'limit'=>3,
+	*        	);
+	*    }
+	*    //Model::all() will then never return a result that is flagged as deleted
+	*    //unless you call Model::scoped()->disable_default_scope()->all();
+	*    </code>
+	*
+	* @return array An array of finder options
+	*/
+>>>>>>> scopes
 	public function default_scope()
 	{
 		return array();
@@ -1696,7 +1724,11 @@ class Model
 			$args = $args[0];
 		// anything left in $args is a find by pk
 		if ($num_args > 0 && (!isset($options['conditions']) || 
+<<<<<<< HEAD
 			(isset($options['scope']) && !$options['scope']->added_unscoped_conditions)))
+=======
+			(isset($options['scope_options']) && !$options['scope_options']->added_unscoped_conditions)))
+>>>>>>> scopes
 		{
 			return static::find_by_pk($args, $options);
 		}
@@ -1850,16 +1882,25 @@ class Model
 	* @param array &$array An array
 	* @return array A valid options array
 	*/
+<<<<<<< HEAD
 	protected static function append_default_scope_to_options($options)
 	{
 		if(isset($options['scope']))
 		{
 			$scope = $options['scope'];
+=======
+	public static function append_default_scope_to_options($options)
+	{
+		if(isset($options['scope_options']))
+		{
+			$scope = $options['scope_options'];
+>>>>>>> scopes
 		}
 		else
 		{
 			$scope = static::scoped();
 		}
+<<<<<<< HEAD
 		//Default scope is always applied last
 		if($scope->default_scope_is_enabled() && $default = $scope->default_scope())
 		{
@@ -1873,6 +1914,32 @@ class Model
 		if($scope->remove_scope_from_hash_after_adding_default_scope)
 		{
 			unset($options['scope']);
+=======
+
+		if(!isset($options['scope_options']) && !$scope->default_scope())//Model does not use scopes at all
+    	{
+			return $options;
+    	}
+		
+		if($options)
+		{
+			$scope->added_unscoped_conditions = true;
+			$scope = $scope->add_scope($options);
+		}
+		
+		//Default scope is always applied last
+		if($scope->default_scope_is_enabled() && $default = $scope->default_scope())
+		{
+			$options = $scope->add_scope($default)->get_options();
+		}
+		elseif($options)
+		{
+			$options = $scope->get_options();
+		}
+		if($scope->remove_scope_from_hash_after_adding_default_scope)
+		{
+			unset($options['scope_options']);
+>>>>>>> scopes
 		}
 		return $options;
 	}
