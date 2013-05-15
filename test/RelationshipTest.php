@@ -1,5 +1,4 @@
 <?php
-include 'helpers/config.php';
 
 class NotModel {};
 
@@ -223,6 +222,16 @@ class RelationshipTest extends DatabaseTest
 		$values = array('city' => 'Richmond', 'state' => 'VA', 'name' => 'Club 54', 'address' => '123 street');
 		$venue = $event->create_venue($values);
 		$this->assert_not_null($venue->id);
+	}
+
+	public function test_build_association_overwrites_guarded_foreign_keys()
+	{
+		$author = new AuthorAttrAccessible();
+		$author->save();
+
+		$book = $author->build_book();
+
+		$this->assert_not_null($book->author_id);
 	}
 
 	public function test_belongs_to_can_be_self_referential()

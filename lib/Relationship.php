@@ -12,8 +12,8 @@ namespace ActiveRecord;
 interface InterfaceRelationship
 {
 	public function __construct($options=array());
-	public function build_association(Model $model, $attributes=array());
-	public function create_association(Model $model, $attributes=array());
+	public function build_association(Model $model, $attributes=array(), $guard_attributes=true);
+	public function create_association(Model $model, $attributes=array(), $guard_attributes=true);
 }
 
 /**
@@ -229,10 +229,10 @@ abstract class AbstractRelationship implements InterfaceRelationship
 	 * @param array $attributes Hash containing attributes to initialize the model with
 	 * @return Model
 	 */
-	public function build_association(Model $model, $attributes=array())
+	public function build_association(Model $model, $attributes=array(), $guard_attributes=true)
 	{
 		$class_name = $this->class_name;
-		return new $class_name($attributes);
+		return new $class_name($attributes, $guard_attributes);
 	}
 
 	/**
@@ -242,10 +242,10 @@ abstract class AbstractRelationship implements InterfaceRelationship
 	 * @param array $attributes Hash containing attributes to initialize the model with
 	 * @return Model
 	 */
-	public function create_association(Model $model, $attributes=array())
+	public function create_association(Model $model, $attributes=array(), $guard_attributes=true)
 	{
 		$class_name = $this->class_name;
-		$new_record = $class_name::create($attributes);
+		$new_record = $class_name::create($attributes, true, $guard_attributes);
 		return $this->append_record_to_associate($model, $new_record);
 	}
 
@@ -298,16 +298,11 @@ abstract class AbstractRelationship implements InterfaceRelationship
 
 	protected function set_class_name($class_name)
 	{
-		try {
-			$reflection = Reflections::instance()->add($class_name)->get($class_name);
-		} catch (\ReflectionException $e) {
-			if (isset($this->options['namespace'])) {
-				$class_name = $this->options['namespace'].'\\'.$class_name;
-				$reflection = Reflections::instance()->add($class_name)->get($class_name);
-			} else {
-				throw $e;
-			}
+		if (!has_absolute_namespace($class_name) && isset($this->options['namespace'])) {
+			$class_name = $this->options['namespace'].'\\'.$class_name;
 		}
+		
+		$reflection = Reflections::instance()->add($class_name)->get($class_name);
 
 		if (!$reflection->isSubClassOf('ActiveRecord\\Model'))
 			throw new RelationshipException("'$class_name' must extend from ActiveRecord\\Model");
@@ -544,27 +539,76 @@ class HasMany extends AbstractRelationship
 		return $class_name::find($this->poly_relationship ? 'all' : 'first',$options);
 	}
 
-	private function inject_foreign_key_for_new_association(Model $model, &$attributes)
+	/**
+	 * Get an array containing the key and value of the foreign key for the association
+	 *
+	 * @param Model $model
+	 * @access private
+	 * @return array
+	 */
+	private function get_foreign_key_for_new_association(Model $model)
 	{
 		$this->set_keys($model);
 		$primary_key = Inflector::instance()->variablize($this->foreign_key[0]);
 
-		if (!isset($attributes[$primary_key]))
-			$attributes[$primary_key] = $model->id;
+		return array(
+			$primary_key => $model->id,
+		);
+	}
+
+	private function inject_foreign_key_for_new_association(Model $model, &$attributes)
+	{
+		$primary_key = $this->get_foreign_key_for_new_association($model);
+
+		if (!isset($attributes[key($primary_key)]))
+			$attributes[key($primary_key)] = current($primary_key);
 
 		return $attributes;
 	}
 
-	public function build_association(Model $model, $attributes=array())
+	public function build_association(Model $model, $attributes=array(), $guard_attributes=true)
 	{
-		$attributes = $this->inject_foreign_key_for_new_association($model, $attributes);
-		return parent::build_association($model, $attributes);
+		$relationship_attributes = $this->get_foreign_key_for_new_association($model);
+
+		if ($guard_attributes) {
+			// First build the record with just our relationship attributes (unguarded)
+			$record = parent::build_association($model, $relationship_attributes, false);
+
+			// Then, set our normal attributes (using guarding)
+			$record->set_attributes($attributes);
+		} else {
+			// Merge our attributes
+			$attributes = array_merge($relationship_attributes, $attributes);
+
+			// First build the record with just our relationship attributes (unguarded)
+			$record = parent::build_association($model, $attributes, $guard_attributes);
+		}
+
+		return $record;
 	}
 
-	public function create_association(Model $model, $attributes=array())
+	public function create_association(Model $model, $attributes=array(), $guard_attributes=true)
 	{
-		$attributes = $this->inject_foreign_key_for_new_association($model, $attributes);
-		return parent::create_association($model, $attributes);
+		$relationship_attributes = $this->get_foreign_key_for_new_association($model);
+
+		if ($guard_attributes) {
+			// First build the record with just our relationship attributes (unguarded)
+			$record = parent::build_association($model, $relationship_attributes, false);
+
+			// Then, set our normal attributes (using guarding)
+			$record->set_attributes($attributes);
+
+			// Save our model, as a "create" instantly saves after building
+			$record->save();
+		} else {
+			// Merge our attributes
+			$attributes = array_merge($relationship_attributes, $attributes);
+
+			// First build the record with just our relationship attributes (unguarded)
+			$record = parent::create_association($model, $attributes, $guard_attributes);
+		}
+
+		return $record;
 	}
 
 	public function load_eagerly($models=array(), $attributes=array(), $includes, Table $table)
