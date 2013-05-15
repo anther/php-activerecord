@@ -197,6 +197,7 @@ class Scopes
 			}
 			$options = $this->get_options();
 			unset($options['conditions']);
+			unset($options['joins']);
 		}
 		else
 		{

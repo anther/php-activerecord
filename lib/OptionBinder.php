@@ -115,6 +115,14 @@ class OptionBinder
 				$this->where($value);
 				continue;
 			}
+			elseif($option == 'joins')
+			{
+				if (!isset($this->options['joins']))
+					$this->options['joins'] = $value;
+				else
+					$this->options['joins'] .= " $value";
+				continue;
+			}
 			$this->options[$option] = $value;
 		}
 		return $this;
