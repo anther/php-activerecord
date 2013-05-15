@@ -3,23 +3,12 @@
  * @package ActiveRecord
  */
 namespace ActiveRecord;
-<<<<<<< HEAD
-
-/**
- * Used to stack Query objects and provide a mechanism for default scopes, named
- * scopes, and parameterized scopes.
- *
- * 
- * @package ActiveRecord
- */
-=======
 /**
  * Used to stack OptionBinder objects and provide a mechanism for default scopes, named
  * scopes, and parameterized scopes.
  *
  */
 require_once(__DIR__.'/OptionBinder.php');
->>>>>>> scopes
 class Scopes
 {
 	protected $model = null;
@@ -52,11 +41,7 @@ class Scopes
 	
 	/**
 	*  Called to disable a model from using the default scope on a find.
-<<<<<<< HEAD
-	* Usage Model::scoped()->disable_default_scope();
-=======
 	* Usage Model::scoped()->disableDefaultScope();
->>>>>>> scopes
 	*/
 	public function disable_default_scope()
 	{
@@ -77,24 +62,17 @@ class Scopes
 		return $this->model;
 	}
 	
-<<<<<<< HEAD
-=======
 	public function __clone()
 	{
 		$this->scopes = clone $this->scopes;
 	}
 	
->>>>>>> scopes
 	/**
 	* Returns the list of stacked scope options with a reference to itself
 	* in the options array so that the state of the Model object it was called upon
 	* can be persisted
 	*
-<<<<<<< HEAD
-	* @return array An options array with a reference to the scope in the ['scope'] key
-=======
 	* @return array An options array with a reference to the scope in the ['scope_options'] key
->>>>>>> scopes
 	*/
 	public function get_options($with_scope_attached = true)
 	{
@@ -104,35 +82,17 @@ class Scopes
 			$options = $this->scopes->get_options();
 		}
 		if($with_scope_attached)
-<<<<<<< HEAD
-			$options['scope'] = $this;
-=======
 			$options['scope_options'] = $this;
->>>>>>> scopes
 		return $options;
 	}
 	
 	/**
 	* Pushes a scope onto the stack of applied scopes.
-<<<<<<< HEAD
-	* A scope can be in the form of an options array or a Query Object
-=======
 	* A scope can be in the form of an options array or a OptionBinder Object
->>>>>>> scopes
 	*/
 	public function add_scope($scope)
 	{
 		if(!$this->scopes)
-<<<<<<< HEAD
-			$this->scopes = new Query($this->model);
-		if(is_array($scope) && isset($scope['scope']))
-		{
-			$this->add_scope($scope['scope']);
-			unset($scope['scope']);
-		}
-		
-		if($scope instanceof Query)//already Query Instance
-=======
 			$this->scopes = new OptionBinder($this->model);
 		if(is_array($scope) && isset($scope['scope_options']))
 		{
@@ -141,7 +101,6 @@ class Scopes
 		}
 		
 		if($scope instanceof OptionBinder)//already OptionBinder Instance
->>>>>>> scopes
 		{
 			$this->scopes->merge($scope);
 		}
@@ -176,11 +135,7 @@ class Scopes
 	* Will secondly check to see if it's a function call that can be appended to 
 	* the list of scopes
 	* Lastly it will delegate to the model that the function was called on, and if
-<<<<<<< HEAD
-	* the model's function returns a Scope or Query object, it will append it to the 
-=======
 	* the model's function returns a Scope or OptionBinder object, it will append it to the 
->>>>>>> scopes
 	* list of scopes.
 	*/
 	public function __call($method, $args)
@@ -193,26 +148,16 @@ class Scopes
 			$this->add_scope($named_scope);
 			return $this;
 		}
-<<<<<<< HEAD
-		elseif(in_array($method, Query::get_builder_scopes()))
-		{
-			$query = new Query($this->model);
-=======
 		elseif(in_array($method, OptionBinder::get_builder_scopes()))
 		{
 			$query = new OptionBinder($this->model);
->>>>>>> scopes
 			$result = call_user_func_array(array($query, $method), $args);
 			return $this->add_scope($result);
 		}
 		elseif(is_callable(array($this->model,$method)))
 		{
 			$result = $this->call_model_method($method, $args);
-<<<<<<< HEAD
-			if($result instanceof Scopes || $result instanceof Query)
-=======
 			if($result instanceof Scopes || $result instanceof OptionBinder)
->>>>>>> scopes
 				return $this->add_scope($result);
 			else
 				return $this;
@@ -251,18 +196,11 @@ class Scopes
 				$this->add_scope($options);
 			}
 			$options = $this->get_options();
-<<<<<<< HEAD
-		}
-		else
-		{
-			$options['scope'] = $this;
-=======
 			unset($options['conditions']);
 		}
 		else
 		{
 			$options['scope_options'] = $this;
->>>>>>> scopes
 		}
 		return $options;
 	}
@@ -285,21 +223,6 @@ class Scopes
 	
 	public function all($options = array())
 	{
-<<<<<<< HEAD
-		return $this->find('all',$options);
-	}
-	public function first($options = array())
-	{
-		return $this->find('first',$options);
-	}
-	public function last()
-	{
-		return $this->find('last',$options);
-	}
-	
-}
-?>
-=======
 		$options = $this->retrieve_scoped_options($options);
 		$args = array($options);
 		$this->remove_scope_from_hash_after_adding_default_scope = true;
@@ -313,4 +236,3 @@ class Scopes
 		return call_user_func_array(array($this->model, 'first'), $args);
 	}
 }
->>>>>>> scopes
