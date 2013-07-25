@@ -6,7 +6,7 @@ class Property extends ActiveRecord\Model
 
 	static $has_many = array(
 		'property_amenities',
-		array('amenities', 'through' => 'property_amenities')
+		array('amenities', 'through' => 'property_amenities','source'=>'amenity')
 	);
 };
 ?>

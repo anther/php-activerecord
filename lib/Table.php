@@ -236,9 +236,16 @@ class Table
 
 			$list[] = $model;
 		}
-
-		if ($collect_attrs_for_includes && !empty($list))
-			$this->execute_eager_load($list, $attrs, $includes);
+		if(Config::instance()->use_scoped_relationships())
+		{
+			if ($collect_attrs_for_includes && !empty($list))
+				Relationships::executeEagerLoad($this->class->name,$list,$includes);
+		}
+		else
+		{
+			if ($collect_attrs_for_includes && !empty($list))
+				$this->execute_eager_load($list, $attrs, $includes);
+		}
 
 		return $list;
 	}

@@ -9,7 +9,7 @@ namespace ActiveRecord;
  *
  */
 require_once(__DIR__.'/OptionBinder.php');
-class Scopes
+class Scopes implements \IteratorAggregate, \Countable, \ArrayAccess
 {
 	protected $model = null;
 	protected $scopes = null;
@@ -196,7 +196,14 @@ class Scopes
 				$this->add_scope($options);
 			}
 			$options = $this->get_options();
+			/**
+			 * TODO: Find out how necessary this is, all is seems to do is result in duplicate search parameters
+			 */
 			unset($options['conditions']);
+			foreach(OptionBinder::get_merge_scopes() as $merges)
+			{
+				unset($options[$merges]);	
+			}
 		}
 		else
 		{
@@ -234,5 +241,32 @@ class Scopes
 		$args = array($options);
 		$this->remove_scope_from_hash_after_adding_default_scope = true;
 		return call_user_func_array(array($this->model, 'first'), $args);
+	}
+	
+	public function getIterator()
+    {
+    	return new \ArrayIterator($this->all());
+    }
+	
+	public function offsetExists ($offset)
+	{
+		$array = $this->all();
+		return isset($array[$offset]);
+	}
+	
+	public function offsetGet ($offset)
+	{
+		$array = $this->all();
+		return $array[$offset];
+	}
+	
+	public function offsetSet ($offset ,$value )
+	{
+		throw new \Exception('Cannot use set an array key here');
+	}
+	
+	public function offsetUnset ($offset)
+	{
+		throw new \Exception('Cannot use unset here');
 	}
 }

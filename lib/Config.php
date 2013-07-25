@@ -78,6 +78,8 @@ class Config extends Singleton
 	 * @var string
 	 */
 	private $date_format = \DateTime::ISO8601;
+	
+	private $scoped_relationships = false;
 
 	/**
 	 * Allows config initialization using a closure.
@@ -278,6 +280,18 @@ class Config extends Singleton
 	{
 		trigger_error('Use ActiveRecord\Serialization::$DATETIME_FORMAT. Config::set_date_format() has been deprecated.', E_USER_DEPRECATED);
 		Serialization::$DATETIME_FORMAT = $format;
+	}
+	
+	public function use_scoped_relationships($bool=null)
+	{
+		if($bool === null)
+			return $this->scoped_relationships;
+		else
+		{
+			if($bool === true)
+				require_once(__DIR__.'/Scoped_Relationships.php');
+		}
+		return $this->scoped_relationships = $bool;
 	}
 
 	/**

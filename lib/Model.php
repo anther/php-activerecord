@@ -474,6 +474,80 @@ class Model
 		$this->flag_dirty($name);
 		return $value;
 	}
+	
+	
+	private $relationships = null;
+	public function hasRelationship($name)
+	{
+		if($this->relationships === null)
+		{
+			$this->relationships = new Relationships($this);
+		}
+		$relationship = $this->relationships->hasRelationship($name);
+		if($relationship)
+		{
+			return $relationship;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	
+	private static function translate_keys($array)
+	{
+		$relationships = array();
+		foreach($array as $key => $relationship)
+		{
+			$replaced = array();
+			if(!is_array($relationship))
+			{
+				$relationship = array($relationship);
+			}
+			$relationship_name = array_shift($relationship);
+			foreach($relationship as $relationshipKey=>$relationshipValue)
+			{
+				$replaced[lcfirst(static::camelize($relationshipKey))] = $relationshipValue;
+			}
+			if(isset($replaced['source']))
+			{
+				$replaced['to'] = $replaced['source'];
+				unset($replaced['source']);
+			}
+			if(isset($replaced['through']) && !isset($replaced['to']))
+			{
+				$replaced['to'] = $relationship_name;
+			}
+			$relationships[$relationship_name] = $replaced;
+		}
+		return $relationships;
+	}
+	
+	public static function getPrimaryKeyField()
+	{
+		$first = true;
+		$pk = static::table()->pk;
+		return $first ? $pk[0] : $pk;
+	}
+
+	private static function camelize($word) { 
+	  return preg_replace('/(^|_)([a-z])/e', 'strtoupper("\\2")', $word); 
+	}
+
+	public static function belongsTo()
+	{
+		return isset(static::$belongs_to) ? static::translate_keys(static::$belongs_to) : array();
+	}
+
+	public static function hasMany()
+	{
+		return isset(static::$has_many) ? static::translate_keys(static::$has_many) : array();
+	}
+
+	public static function hasOne()
+	{
+		return isset(static::$has_one) ? static::translate_keys(static::$has_one) : array();
+	}
 
 	/**
 	 * Retrieves an attribute's value or a relationship object based on the name passed. If the attribute
@@ -501,7 +575,15 @@ class Model
 		$table = static::table();
 
 		// this may be first access to the relationship so check Table
-		if (($relationship = $table->get_relationship($name)))
+		if(Config::instance()->use_scoped_relationships())
+		{
+			if($relationship = $this->hasRelationship($name))
+			{
+				$value = $relationship->getUsableReturnValue();
+				return $value;
+			}
+		}
+		else if (($relationship = $table->get_relationship($name)))
 		{
 			$this->__relationships[$name] = $relationship->load($this);
 			return $this->__relationships[$name];
